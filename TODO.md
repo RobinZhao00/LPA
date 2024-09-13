@@ -52,3 +52,4 @@ https://github.com/ecomfe/echarts-wordcloud
 
 这些招聘网站各有特色，从白领到蓝领，从互联网行业到公职类职位，覆盖了不同行业和用户需求。
 
+https://github.com/javascriptdata/danfojs

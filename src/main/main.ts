@@ -9,11 +9,15 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, screen } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import log from 'electron-log';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { job, jobDetail } from './template';
+
+puppeteer.use(StealthPlugin());
 
 class AppUpdater {
   constructor() {
@@ -24,11 +28,42 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let browser;
+let page;
+
+// 在 Electron 启动时初始化 Puppeteer 浏览器和页面
+async function initPuppeteer() {
+  if (!browser) {
+    browser = await puppeteer.launch();
+    page = await browser.newPage();
+  }
+}
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.handle('fetchPage', async (event, url) => {
+  await initPuppeteer();
+  await page.goto(url, { waitUntil: 'networkidle2' });
+
+  // const content = await page.content(); // 获取页面的 HTML 内容
+  // // const handler = templates[url.split('?')[0].split('/').slice(-1)];
+
+  const content = await page.evaluate((jobFunction) => {
+    return eval(`(${jobFunction})(document)`);
+  }, job.toString());
+
+  // TODO 详情页的format方法
+  // const content = await page.evaluate((jobDetailFunction) => {
+  //   return eval(`(${jobDetailFunction})(document)`);
+  // }, jobDetail.toString());
+
+  // await browser.close();
+
+  return content;
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -71,8 +106,10 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    x: 0,
+    y: 0,
+    width: screen.getPrimaryDisplay().workAreaWidth,
+    height: screen.getPrimaryDisplay().workAreaHeight,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
@@ -82,6 +119,12 @@ const createWindow = async () => {
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+
+  // Add this line to remove the menu bar
+  mainWindow.setMenuBarVisibility(false);
+
+  // Add this line to maximize the window
+  mainWindow.maximize();
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {

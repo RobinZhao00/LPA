@@ -22,6 +22,7 @@ const electronHandler = {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
   },
+  fetchPage: (url: string) => ipcRenderer.invoke('fetchPage', url),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
