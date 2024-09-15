@@ -1,6 +1,6 @@
 export const job = (context = document) => {
   if (!context.title.includes('2024年上海人才招聘信息')) {
-    return [];
+    return context.title;
   }
   const cardList = Array.from(
     context.querySelectorAll('.job-list-box .job-card-wrapper'),
@@ -76,14 +76,12 @@ export const job = (context = document) => {
 };
 
 export function jobDetail(context = document) {
-  const rawData =
-    context
-      .querySelector('.job-sec-text')
-      ?.innerHTML.replace(/\s|：/g, '')
-      .split('<br>') || '';
-  const idx = rawData.indexOf('职位要求');
+  const rawData = context.querySelector('.job-sec-text')?.innerHTML || '';
+  const formattedData = rawData.replace(/\s|：/g, '').split('<br>') || '';
+  const idx = formattedData.indexOf('职位要求');
   return {
     jd: rawData.slice(1, idx),
     need: rawData.slice(idx + 1, rawData.length),
+    rawData,
   };
 }

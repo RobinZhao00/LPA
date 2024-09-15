@@ -12,6 +12,7 @@ import path from 'path';
 import { app, BrowserWindow, shell, ipcMain, screen } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import puppeteer from 'puppeteer-extra';
+import log from 'electron-log';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
@@ -29,13 +30,10 @@ class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 let browser;
-let page;
-
 // 在 Electron 启动时初始化 Puppeteer 浏览器和页面
 async function initPuppeteer() {
   if (!browser) {
     browser = await puppeteer.launch();
-    page = await browser.newPage();
   }
 }
 
@@ -47,21 +45,19 @@ ipcMain.on('ipc-example', async (event, arg) => {
 
 ipcMain.handle('fetchPage', async (event, url) => {
   await initPuppeteer();
+  const page = await browser.newPage();
   await page.goto(url, { waitUntil: 'networkidle2' });
-
-  // const content = await page.content(); // 获取页面的 HTML 内容
-  // // const handler = templates[url.split('?')[0].split('/').slice(-1)];
-
-  const content = await page.evaluate((jobFunction) => {
-    return eval(`(${jobFunction})(document)`);
-  }, job.toString());
-
-  // TODO 详情页的format方法
-  // const content = await page.evaluate((jobDetailFunction) => {
-  //   return eval(`(${jobDetailFunction})(document)`);
-  // }, jobDetail.toString());
-
-  // await browser.close();
+  let content = '';
+  if (url.includes('job_detail')) {
+    content = await page.evaluate((jobDetailFunction) => {
+      return eval(`(${jobDetailFunction})(document)`);
+    }, jobDetail.toString());
+  } else {
+    content = await page.evaluate((jobFunction) => {
+      return eval(`(${jobFunction})(document)`);
+    }, job.toString());
+  }
+  await page.close();
 
   return content;
 });
@@ -112,6 +108,8 @@ const createWindow = async () => {
     height: screen.getPrimaryDisplay().workAreaHeight,
     icon: getAssetPath('icon.png'),
     webPreferences: {
+      webSecurity: false,
+      allowRunningInsecureContent: true,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
@@ -119,6 +117,7 @@ const createWindow = async () => {
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+  // mainWindow.loadURL('https://www.zhipin.com');
 
   // Add this line to remove the menu bar
   mainWindow.setMenuBarVisibility(false);

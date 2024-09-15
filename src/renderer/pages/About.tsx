@@ -1,9 +1,12 @@
 import Layout from '../components/Layout';
+import useCrawler from '../hooks/useCrawler';
 
 function About() {
+  const { Crawler } = useCrawler();
+
   return (
     <Layout className="about-container">
-      <div>关于</div>
+      <Crawler />
     </Layout>
   );
 }

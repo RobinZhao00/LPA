@@ -12,11 +12,12 @@ import {
   UserOutlined,
   VideoCameraOutlined,
   UploadOutlined,
+  RiseOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Button, theme, Spin } from 'antd';
 import 'normalize.css';
 import './App.css';
-import { Home, About, Contact } from './pages';
+import { Home, About, Contact, Trend } from './pages';
 
 const { Header, Sider, Content } = Layout;
 
@@ -49,11 +50,16 @@ function App() {
               },
               {
                 key: '2',
+                icon: <RiseOutlined />,
+                label: <Link to="/trend">趋势</Link>,
+              },
+              {
+                key: '3',
                 icon: <VideoCameraOutlined />,
                 label: <Link to="/about">关于</Link>,
               },
               {
-                key: '3',
+                key: '4',
                 icon: <UploadOutlined />,
                 label: <Link to="/contact">联系我们</Link>,
               },
@@ -86,6 +92,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/trend" element={<Trend />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
